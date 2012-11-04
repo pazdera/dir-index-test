@@ -34,11 +34,17 @@ int main(int argc, char *argv[])
 	int bpos;
 	char d_type;
 
+	char name_buf[BUF_SIZE];
 	struct stat file_info;
 	int status = 0;
 	int nfiles = 0;
 
-	fd = open(argc > 1 ? argv[1] : ".", O_RDONLY | O_DIRECTORY);
+	if (argc <= 1) {
+		fprintf(stderr, "%s: missing argument: dir\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	fd = open(argv[1], O_RDONLY | O_DIRECTORY);
 	if (fd == -1)
 		handle_error("open");
 
@@ -53,9 +59,12 @@ int main(int argc, char *argv[])
 		for (bpos = 0; bpos < nread;) {
 			d = (struct linux_dirent *) (buf + bpos);
 
-			status = stat(argv[1], &file_info);
+			sprintf(name_buf, "%s/%s", argv[1], d->d_name);
+
+			status = stat(name_buf, &file_info);
 			if (status != 0)
 				handle_error("stat");
+			/*printf("%d %d\n", d->d_ino, file_info.st_ino);*/
 			nfiles++;
 			bpos += d->d_reclen;
 		}

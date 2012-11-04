@@ -4,8 +4,8 @@
 # and a correlation of the order in which they are returned
 # from getdents(2) and their position on the disk
 
-DEVICE="$1"
-FS="$2"
+FS="$1"
+DEVICE="$2"
 TEST_DIR="$3"
 RES_DIR="$4"
 
@@ -43,16 +43,19 @@ function process_data
 
     cat -n "$file" >"$file.dat"
     bin/plot_correlation.sh "$testtype" "$file.dat" \
-                "$RES_DIR/${testtype}_order.png"
+                "$RES_DIR/${testtype}.png"
 }
 
 # ---
 bin/lsino "$TEST_DIR" >"$LOC_DATA_DIR/inode_order"
 process_data "$LOC_DATA_DIR/inode_order" "inode"
 
-# looks like btrfs does not implement FIBMAP which
+bin/lsino-readdir "$TEST_DIR" >"$LOC_DATA_DIR/inode_readdir_order"
+process_data "$LOC_DATA_DIR/inode_readdir_order" "inode-readdir"
+
+# looks like btrfs and jfs do not implement FIBMAP which
 # is necessary to perform this test
-if [ "$FS" != "btrfs" ]; then
+if [ "$FS" != "btrfs" -a "$FS" != "jfs" ]; then
     bin/lsblk "$TEST_DIR" >"$LOC_DATA_DIR/blk_order"
     process_data "$LOC_DATA_DIR/blk_order" "blk"
 fi

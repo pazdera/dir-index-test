@@ -5,7 +5,7 @@ DATA_FILE="$2"
 OUTPUT_FILE="$3"
 
 case $PLOT_TYPE in
-    inode)
+    inode|inode-readdir)
         title="Correlation of inode numbers to position in getdents output";
         xlabel="getdents position (read in htree order)";
         ylabel="inode number";;

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 RESULTS_DIR="$1"
+TYPES="create delete getdents-stat readdir-stat lsl ls du find tar cp"
 
 for fsdir in `ls "$RESULTS_DIR"`; do
     if [ -d "$RESULTS_DIR/$fsdir" ]; then
@@ -9,7 +10,7 @@ for fsdir in `ls "$RESULTS_DIR"`; do
             if [ -d "$RESULTS_DIR/$fsdir/$countdir" ]; then
                 nfiles=`echo "$countdir" | sed "s/_files$//"`
                 echo "  $nfiles"
-                for type in dirstat ls du find tar cp; do
+                for type in $TYPES; do
                     echo "    $type"
                     data_file="$RESULTS_DIR/$fsdir/$countdir/perf/$type.time"
                     if [ -e "$data_file" ]; then
