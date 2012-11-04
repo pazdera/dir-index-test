@@ -11,7 +11,9 @@ After building the test tools with
 
 you can run the test by running the run_test script
 
-    ./run_tests.sh <device>
+    ./run_tests.sh
+
+You will need to change some values in the beginning of the run script.
 
 **WARNING**: All data on the provided device will be DESTROYED
 
@@ -19,7 +21,7 @@ you can run the test by running the run_test script
     * bin/ - various tools
     * src/ - sources of C tools
     * LICENSE - GNU GPLv3
-    * README
+    * README.md
     * Makefile - to build tools
 
 ## Author
