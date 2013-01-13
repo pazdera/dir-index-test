@@ -1,6 +1,7 @@
 ##
 
 all:
+	mkdir -p bin/
 	gcc src/lsino.c -o bin/lsino
 	gcc src/lsino-readdir.c -o bin/lsino-readdir
 	gcc src/lsblk.c -o bin/lsblk
@@ -9,5 +10,4 @@ all:
 	gcc -o spd_readdir.so -fPIC -shared src/spd_readdir.c -ldl
 
 clean:
-	rm -f bin/lsino bin/lsino-readdir bin/lsblk \
-	bin/getdents-stat bin/readdir-stat spd_readdir.so
+	rm -r bin/
