@@ -1,7 +1,7 @@
 #!/bin/bash
 
 RESULTS_DIR="$1"
-TYPES="create delete getdents-stat readdir-stat lsl ls du find tar cp"
+TYPES="$2"
 
 for fsdir in `ls "$RESULTS_DIR"`; do
     if [ -d "$RESULTS_DIR/$fsdir" ]; then

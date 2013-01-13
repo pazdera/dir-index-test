@@ -1,13 +1,13 @@
 #!/bin/bash
 
-RESULTS_DIR="results"
-TYPES="create delete getdents-stat readdir-stat lsl ls du find tar cp"
+RESULTS_DIR="$1"
+TYPES="$2"
 
-rm $RESULTS_DIR/*.dat
-rm $RESULTS_DIR/*.png
+rm -f $RESULTS_DIR/*.dat
+rm -f $RESULTS_DIR/*.png
 
-bin/gather_times.sh "$RESULTS_DIR"
-bin/fmt_result_data.py "$RESULTS_DIR"
+scripts/gather_times.sh "$RESULTS_DIR" "$TYPES"
+scripts/fmt_result_data.py "$RESULTS_DIR"
 
 cd "$RESULTS_DIR"
 

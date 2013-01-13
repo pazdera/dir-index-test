@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Extract interesting files from a directory with
+# test results from dir-index-test
+
 RESULTS_DIR="$1"
 EXTRACT_DIR="$2"
 

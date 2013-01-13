@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# This script will perform several tests of directory entries
-# and a correlation of the order in which they are returned
-# from getdents(2) and their position on the disk
+# dir-index-test
+# author: Radek Pazdera (rpazdera@redhat.com)
+
+# This script will gather some statistics about the directory.
+# It will calculate the correlation between the ideal ordering
+# of the inodes and the sequence as returned from getdents()
+# Apart from that, will plot the inode numbers as they were
+# returned, to ilustrate how the disk had to seek.
 
 FS="$1"
 DEVICE="$2"
@@ -37,12 +42,12 @@ function process_data
     local file="$1"
     local testtype="$2"
 
-    bin/crunch.py "$file" > "$file.stats"
+    scripts/crunch.py "$file" > "$file.stats"
     echo "## $testtype order stats ##" | cat - "$file.stats" \
                         >>"$LOC_STATS_FILE"
 
     cat -n "$file" >"$file.dat"
-    bin/plot_correlation.sh "$testtype" "$file.dat" \
+    scripts/plot_correlation.sh "$testtype" "$file.dat" \
                 "$RES_DIR/${testtype}.png"
 }
 
@@ -55,14 +60,14 @@ process_data "$LOC_DATA_DIR/inode_readdir_order" "inode-readdir"
 
 # looks like btrfs and jfs do not implement FIBMAP which
 # is necessary to perform this test
-if [ "$FS" != "btrfs" -a "$FS" != "jfs" ]; then
-    bin/lsblk "$TEST_DIR" >"$LOC_DATA_DIR/blk_order"
-    process_data "$LOC_DATA_DIR/blk_order" "blk"
-fi
+#if [ "$FS" != "btrfs" -a "$FS" != "jfs" ]; then
+#    bin/lsblk "$TEST_DIR" >"$LOC_DATA_DIR/blk_order"
+#    process_data "$LOC_DATA_DIR/blk_order" "blk"
+#fi
 
 # only ext4 has block groups
 if [ "$FS" == "ext4" ]; then
     ipg=`ext4_inodes_per_group "$DEVICE"`
-    bin/inode2bg.py "$LOC_DATA_DIR/inode_order" $ipg >"$LOC_DATA_DIR/bg_order"
+    scripts/inode2bg.py "$LOC_DATA_DIR/inode_order" $ipg >"$LOC_DATA_DIR/bg_order"
     process_data "$LOC_DATA_DIR/bg_order" "bg"
 fi
