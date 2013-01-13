@@ -9,4 +9,5 @@ all:
 	gcc -o spd_readdir.so -fPIC -shared src/spd_readdir.c -ldl
 
 clean:
-	rm -f bin/lsino bin/lsblk bin/getdents-stat bin/readdir-stat spd_readdir.so
+	rm -f bin/lsino bin/lsino-readdir bin/lsblk \
+	bin/getdents-stat bin/readdir-stat spd_readdir.so
