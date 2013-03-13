@@ -38,14 +38,37 @@
 #
 DEVICE="/dev/disk/by-id/ata-WDC_WD2500AAKX-083CA0_WD-WCAYW0198571-part1"
 DROP_OFF_DIR="/mnt/Reserved/drop-off"
-RESULTS_DIR="results/"
-FILESYSTEMS="ext4 ext4-spd xfs btrfs" # jfs
-FSIZES="0" # 4096"
+RESULTS_DIR="results-ext4/"
+FILESYSTEMS="ext4 xfs btrfs" # ext4-spd-10000 ext4-spd" # ext4-spd xfs btrfs" # jfs
+
+# XXX WARNING: This is only for ext4_comparison!
+EXT4_MODES="spd 1000 10000 50000 normal"
+
+
+FSIZES="0 4096"
 TESTS="perf" # seekwatcher
-TEST_CASES="readdir-stat ls" # find tar cp lsl getdents-stat
-DIR_TYPE="dirty"
+TEST_CASES="cp readdir-stat getdents-stat" # find tar cp lsl ls getdents-stat
+DIR_TYPE="clean"
 DIR_SIZES="10000 25000 50000 100000 250000 500000 750000 \
            1000000 1250000 1500000 1750000 2000000"
+
+
+function run_ext4_comparison
+{
+    fs="$1"
+    dirsize="$2"
+    fsize="$3"
+
+    echo "Executing $fs benchmark for $dirsize files [${fsize}B each]"
+    ./ext4_comparison.sh "$fs" "$dirsize" "$fsize" \
+        "$DEVICE" "$DROP_OFF_DIR" "$RESULTS_DIR/$fsize" \
+        "$TESTS" "$TEST_CASES" "$DIR_TYPE"
+
+    if [ $? -ne 0 ]; then
+        echo "Comparison failed!"
+        exit 1
+    fi
+}
 
 function run_benchmark
 {
