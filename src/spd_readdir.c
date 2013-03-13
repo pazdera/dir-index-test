@@ -60,7 +60,9 @@ struct dir_s {
 	int	num;
 	int	max;
 	struct dirent_s *dp;
+	int	page;
 	int	pos;
+	int	limit;
 	int	direct;
 	struct dirent ret_dir;
 	struct dirent64 ret_dir64;
@@ -83,6 +85,9 @@ static int num_open = 0;
 static int do_debug = 0;
 #endif
 
+#define ENV_CACHE_LIMIT "SPD_READDIR_CACHE_LIMIT"
+
+/* Initialize pointers to the real operations we are overriding */
 static void setup_ptr()
 {
 	char *cp;
@@ -121,7 +126,21 @@ static void free_cached_dir(struct dir_s *dirstruct)
 	free(dirstruct->dp);
 	dirstruct->dp = 0;
 	dirstruct->max = dirstruct->num = 0;
-}	
+}
+
+static void clear_cache(struct dir_s *dirstruct)
+{
+	int i;
+
+	if (!dirstruct->dp)
+		return;
+
+	for (i=0; i < dirstruct->num; i++) {
+		free(dirstruct->dp[i].d_name);
+	}
+	memset(dirstruct->dp, 0, dirstruct->max*sizeof(struct dirent_s));
+	dirstruct->num = 0;
+}
 
 static int ino_cmp(const void *a, const void *b)
 {
@@ -164,7 +183,8 @@ void cache_dirstruct(struct dir_s *dirstruct)
 	struct dirent_s *ds, *dnew;
 	struct dirent64 *d;
 
-	while ((d = (*real_readdir64)(dirstruct->dir)) != NULL) {
+	while ((!dirstruct->limit || dirstruct->num < dirstruct->limit) &&
+	       (d = (*real_readdir64)(dirstruct->dir)) != NULL) {
 		if (dirstruct->num >= dirstruct->max) {
 			dirstruct->max += ALLOC_STEPSIZE;
 			DEBUG_DIR(printf("Reallocating to size %d\n", 
@@ -217,6 +237,12 @@ DIR *opendir(const char *name)
 		return NULL;
 	}
 
+	char *limit = getenv(ENV_CACHE_LIMIT);
+	if (limit)
+		dirstruct->limit = atoi(limit);
+	
+	DEBUG_DIR(printf("Cache limit set to: %d\n", dirstruct->limit));
+
 	if (max_dirsize && (stat(name, &st) == 0) && 
 	    (st.st_size > max_dirsize)) {
 		DEBUG_DIR(printf("Directory size %ld, using direct readdir\n",
@@ -249,6 +275,10 @@ DIR *fdopendir(int fd)
 		errno = -ENOMEM;
 		return NULL;
 	}
+
+	char *limit = getenv(ENV_CACHE_LIMIT);
+	if (!limit)
+		dirstruct->limit = atoi(limit);
 
 	if (max_dirsize && (fstat(fd, &st) == 0) && 
 	    (st.st_size > max_dirsize)) {
@@ -284,8 +314,14 @@ struct dirent *readdir(DIR *dir)
 	if (dirstruct->direct)
 		return (*real_readdir)(dirstruct->dir);
 
-	if (dirstruct->pos >= dirstruct->num)
-		return NULL;
+	if (dirstruct->pos >= dirstruct->num) {
+		clear_cache(dirstruct);
+		cache_dirstruct(dirstruct);
+		dirstruct->page++;
+		dirstruct->pos = 0;
+		if (!dirstruct->num)
+			return NULL;
+	}
 
 	ds = &dirstruct->dp[dirstruct->pos++];
 	dirstruct->ret_dir.d_ino = ds->d_ino;
@@ -307,8 +343,14 @@ int readdir_r(DIR *dir, struct dirent *entry, struct dirent **result)
 		return (*real_readdir_r)(dirstruct->dir, entry, result);
 
 	if (dirstruct->pos >= dirstruct->num) {
-		*result = NULL;
-		return 0;
+		clear_cache(dirstruct);
+		cache_dirstruct(dirstruct);
+		dirstruct->page++;
+		dirstruct->pos = 0;
+		if (!dirstruct->num) {
+			*result = NULL;
+			return 0;
+		}
 	}
 
 	ds = &dirstruct->dp[dirstruct->pos++];
@@ -330,8 +372,14 @@ struct dirent64 *readdir64(DIR *dir)
 	if (dirstruct->direct)
 		return (*real_readdir64)(dirstruct->dir);
 
-	if (dirstruct->pos >= dirstruct->num)
-		return NULL;
+	if (dirstruct->pos >= dirstruct->num) {
+		clear_cache(dirstruct);
+		cache_dirstruct(dirstruct);
+		dirstruct->page++;
+		dirstruct->pos = 0;
+		if (!dirstruct->num)
+			return NULL;
+	}
 
 	ds = &dirstruct->dp[dirstruct->pos++];
 	dirstruct->ret_dir64.d_ino = ds->d_ino;
@@ -351,7 +399,7 @@ off_t telldir(DIR *dir)
 	if (dirstruct->direct)
 		return (*real_telldir)(dirstruct->dir);
 
-	return ((off_t) dirstruct->pos);
+	return ((off_t) (dirstruct->page*dirstruct->limit + dirstruct->pos));
 }
 
 void seekdir(DIR *dir, off_t offset)
@@ -363,7 +411,10 @@ void seekdir(DIR *dir, off_t offset)
 		return;
 	}
 
-	dirstruct->pos = offset;
+	dirstruct->page = offset / dirstruct->limit;
+	dirstruct->pos = offset % dirstruct->limit;
+	(*real_seekdir)(dirstruct->dir, dirstruct->page);
+	cache_dir(dirstruct);
 }
 
 void rewinddir(DIR *dir)
@@ -374,6 +425,7 @@ void rewinddir(DIR *dir)
 	if (dirstruct->direct)
 		return;
 	
+	dirstruct->page = 0;
 	dirstruct->pos = 0;
 	free_cached_dir(dirstruct);
 	cache_dirstruct(dirstruct);
