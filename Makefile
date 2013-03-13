@@ -10,4 +10,4 @@ all:
 	gcc -o spd_readdir.so -fPIC -shared src/spd_readdir.c -ldl
 
 clean:
-	rm -r bin/
+	rm -rf bin/ spd_readdir.so
