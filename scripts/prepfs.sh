@@ -7,7 +7,7 @@ RESULTS_DIR="$3"
 umount "$DEVICE" >/dev/null 2>/dev/null
 echo "Creating $FS file system on $DEVICE"
 case $FS in
-    "ext4"|"ext4-spd")
+    "ext4"|"ext4-spd"|"ext4-spd-1000"|"ext4-spd-10000")
         mkfs.ext4 -q "$DEVICE"; # >"$RESULTS_DIR/mkfslog";
         dumpe2fs "$DEVICE" >"$RESULTS_DIR/fsinfo" 2>/dev/null;;
     "ext4-nodx")
