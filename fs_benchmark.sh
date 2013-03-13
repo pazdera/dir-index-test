@@ -53,6 +53,15 @@ scripts/prepfs.sh "$FS" "$DEVICE" "$rroot"
 
 # Set preload lib for spd test
 if [ "$FS" == "ext4-spd" ]; then
+    export SPD_READDIR_CACHE_LIMIT=0
+    export LD_PRELOAD=`pwd`"/spd_readdir.so"
+    mount_as="ext4"
+elif [ "$FS" == "ext4-spd-1000" ]; then
+    export SPD_READDIR_CACHE_LIMIT=1000
+    export LD_PRELOAD=`pwd`"/spd_readdir.so"
+    mount_as="ext4"
+elif [ "$FS" == "ext4-spd-10000" ]; then
+    export SPD_READDIR_CACHE_LIMIT=10000
     export LD_PRELOAD=`pwd`"/spd_readdir.so"
     mount_as="ext4"
 else
