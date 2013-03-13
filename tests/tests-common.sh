@@ -7,7 +7,7 @@ TTYPE="$2"
 FS="$3"
 DEVICE="$4"
 TEST_DIR="$5"
-DROP_OFF_DIR="$5"
+DROP_OFF_DIR="$6"
 RES_DIR="$7"
 
 if [ $TTYPE == "perf" ]; then
