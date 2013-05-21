@@ -84,6 +84,11 @@ echo "Creating $DIRSIZE files"
 time (scripts/create_files.py "$DIR_TYPE" "$test_dir" \
             $DIRSIZE "$FSIZE" "0" >/dev/null) 2>"$perfdir/create.time"
 
+if [ "$FS" == "xfs-defrag" ]; then
+    xfs_db -r -c frag >"$locdir/frag"
+    xfs_fsr "$DEVICE"
+fi
+
 tests/locality.sh "$FS" "$DEVICE" "$test_dir" "$rroot"
 
 for ttype in $TESTS; do

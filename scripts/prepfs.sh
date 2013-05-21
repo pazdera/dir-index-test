@@ -15,7 +15,7 @@ case $FS in
         dumpe2fs "$DEVICE" >"$RESULTS_DIR/fsinfo" 2>/dev/null;;
     "ext3")
         mkfs.ext3 $DEVICE >"$RESULTS_DIR/mkfslog" 2>/dev/null;;
-    "xfs")
+    "xfs"|"xfs-defrag")
         mkfs.xfs -f "$DEVICE" >"$RESULTS_DIR/mkfslog" 2>/dev/null;;
     "btrfs")
         mkfs.btrfs $DEVICE >"$RESULTS_DIR/mkfslog" 2>/dev/null;;
