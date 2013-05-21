@@ -64,6 +64,8 @@ elif [ "$FS" == "ext4-spd-10000" ]; then
     export SPD_READDIR_CACHE_LIMIT=10000
     export LD_PRELOAD=`pwd`"/spd_readdir.so"
     mount_as="ext4"
+elif [ "$FS" == "xfs-defrag" ]; then
+    mount_as="xfs"
 else
     export LD_PRELOAD=""
     mount_as="$FS"
@@ -85,8 +87,8 @@ time (scripts/create_files.py "$DIR_TYPE" "$test_dir" \
             $DIRSIZE "$FSIZE" "0" >/dev/null) 2>"$perfdir/create.time"
 
 if [ "$FS" == "xfs-defrag" ]; then
-    xfs_db -r -c frag >"$locdir/frag"
-    xfs_fsr "$DEVICE"
+    xfs_db -r -c frag "$DEVICE" >"$rroot/frag"
+    time (xfs_fsr "$DEVICE" >"$rroot/defrag-log") 2>"$rroot/defrag-time"
 fi
 
 tests/locality.sh "$FS" "$DEVICE" "$test_dir" "$rroot"
